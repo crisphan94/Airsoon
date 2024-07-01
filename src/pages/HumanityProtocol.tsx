@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 
 const HUMANITY_RPC_URL = "http://localhost:3000/humanity";
 const CLAIM_CONTRACT = "0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7";
+const BRIDGE_CONTRACT = "0x5F7CaE7D1eFC8cC05da97D988cFFC253ce3273eF";
 
 type FormValues = {
   amount: string;
@@ -35,19 +36,30 @@ const HumanityProtocol: React.FC = () => {
     setLogs((prevLogs) => [...prevLogs, message]);
   };
 
-  const generateData = () => {
-    const addressHex = wallet.address
-      .toLowerCase()
-      .replace("0x", "")
-      .padStart(64, "0");
-    return `0x51cff8d9000000000000000000000000${addressHex}`;
+  const generateData = (
+    destinationNetwork: number,
+    destinationAddress: string,
+    amount: bigint,
+    token: string,
+    forceUpdateGlobalExitRoot: boolean,
+    permitData: string
+  ) => {
+    const iface = new ethers.Interface([
+      "function bridgeAsset(uint32 destinationNetwork, address destinationAddress, uint256 amount, address token, bool forceUpdateGlobalExitRoot, bytes permitData)",
+    ]);
+
+    return iface.encodeFunctionData("bridgeAsset", [
+      destinationNetwork,
+      destinationAddress,
+      amount,
+      token,
+      forceUpdateGlobalExitRoot,
+      permitData,
+    ]);
   };
 
   const onSubmit = async (data: FormValues) => {
     addLog(`🚀 Starting ${data.repeat} transactions...`);
-
-    const inputData = generateData();
-    addLog(`✅ Data generated for ${wallet.address}: ${inputData}`);
 
     let count = 0;
     intervalRef.current = setInterval(async () => {
@@ -59,8 +71,15 @@ const HumanityProtocol: React.FC = () => {
 
       try {
         const tx = await wallet.sendTransaction({
-          to: CLAIM_CONTRACT,
-          data: generateData(),
+          to: BRIDGE_CONTRACT,
+          data: generateData(
+            0,
+            wallet.address,
+            ethers.parseEther(data.amount),
+            ethers.ZeroAddress,
+            true,
+            "0x"
+          ),
           value: ethers.parseEther(data.amount),
         });
 
@@ -74,7 +93,7 @@ const HumanityProtocol: React.FC = () => {
       }
 
       count++;
-    }, 8000);
+    }, 10000);
   };
 
   const stopTransactions = () => {
