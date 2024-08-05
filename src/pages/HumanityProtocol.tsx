@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { ethers } from "ethers";
+import useFilteredAccounts from "../hooks/useFilteredAccounts";
 
 const HUMANITY_RPC_URL = "http://localhost:3000/humanity";
 const CLAIM_CONTRACT = "0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7";
@@ -23,14 +24,17 @@ const HumanityProtocol: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
+  const accounts = useFilteredAccounts();
 
   const provider = new ethers.JsonRpcProvider(HUMANITY_RPC_URL);
-  const privateKey = import.meta.env.VITE_PRIVATE_KEY_PTANQN;
-  const wallet = new ethers.Wallet(privateKey, provider);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  if (accounts.length === 0) {
+    return <>No wallets</>;
+  }
 
   const addLog = (message: string) => {
     setLogs((prevLogs) => [...prevLogs, message]);
@@ -69,27 +73,30 @@ const HumanityProtocol: React.FC = () => {
         return;
       }
 
-      try {
-        const tx = await wallet.sendTransaction({
-          to: BRIDGE_CONTRACT,
-          data: generateData(
-            0,
-            wallet.address,
-            ethers.parseEther(data.amount),
-            ethers.ZeroAddress,
-            true,
-            "0x"
-          ),
-          value: ethers.parseEther(data.amount),
-        });
+      for (const acc of accounts) {
+        const wallet = new ethers.Wallet(acc.privateKey, provider);
+        try {
+          const tx = await wallet.sendTransaction({
+            to: BRIDGE_CONTRACT,
+            data: generateData(
+              0,
+              wallet.address,
+              ethers.parseEther(data.amount),
+              ethers.ZeroAddress,
+              true,
+              "0x"
+            ),
+            value: ethers.parseEther(data.amount),
+          });
 
-        addLog(
-          `⏳ Transaction ${count + 1}/${data.repeat} pending confirmation...`
-        );
-        await tx.wait();
-        addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
-      } catch (error) {
-        addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+          addLog(
+            `⏳ Transaction ${count + 1}/${data.repeat} pending confirmation...`
+          );
+          await tx.wait();
+          addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
+        } catch (error) {
+          addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+        }
       }
 
       count++;
@@ -105,19 +112,23 @@ const HumanityProtocol: React.FC = () => {
 
   const claimReward = async () => {
     addLog(`🚀 Starting claim reward...`);
-    try {
-      const tx = await wallet.sendTransaction({
-        to: CLAIM_CONTRACT,
-        data: "0xb88a802f",
-        value: 0n,
-      });
 
-      addLog(`⏳ Transaction pending confirmation...`);
+    for (const acc of accounts) {
+      const wallet = new ethers.Wallet(acc.privateKey, provider);
+      try {
+        const tx = await wallet.sendTransaction({
+          to: CLAIM_CONTRACT,
+          data: "0xb88a802f",
+          value: 0n,
+        });
 
-      await tx.wait();
-      addLog(`✅ Transaction confirmed: ${tx.hash}`);
-    } catch (error) {
-      addLog(`❌ Error  ${error}`);
+        addLog(`⏳ Transaction pending confirmation...`);
+
+        await tx.wait();
+        addLog(`✅ Transaction confirmed: ${tx.hash}`);
+      } catch (error) {
+        addLog(`❌ Error  ${error}`);
+      }
     }
   };
 
