@@ -22,7 +22,6 @@ const HumanityProtocol: React.FC = () => {
   });
 
   const [logs, setLogs] = useState<string[]>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
   const accounts = useFilteredAccounts();
 
@@ -66,9 +65,8 @@ const HumanityProtocol: React.FC = () => {
     addLog(`🚀 Starting ${data.repeat} transactions...`);
 
     let count = 0;
-    intervalRef.current = setInterval(async () => {
+    const runSwap = async () => {
       if (count >= data.repeat) {
-        clearInterval(intervalRef.current!);
         addLog("✅ All transactions completed!");
         return;
       }
@@ -103,14 +101,10 @@ const HumanityProtocol: React.FC = () => {
       }
 
       count++;
-    }, 10000);
-  };
+      runSwap();
+    };
 
-  const stopTransactions = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      addLog("🛑 Stopped!");
-    }
+    runSwap();
   };
 
   const claimReward = async () => {
@@ -200,15 +194,6 @@ const HumanityProtocol: React.FC = () => {
                 sx={{ marginTop: 2 }}
               >
                 Start
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                fullWidth
-                sx={{ marginTop: 2 }}
-                onClick={stopTransactions}
-              >
-                Stop
               </Button>
             </Box>
           </form>
