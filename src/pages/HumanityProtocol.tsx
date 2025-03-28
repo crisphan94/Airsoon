@@ -3,19 +3,18 @@ import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { ethers } from "ethers";
 
-const LENS_RPC_URL = "https://rpc.testnet.lens.dev";
-const BRIDGE_CONTRACT = "0x000000000000000000000000000000000000800A";
-const MINT_CONTRACT = "0x6ab1af878aeac419b98c0ab6bdcc05bd9d326c20";
+const HUMANITY_RPC_URL = "https://rpc.testnet.humanity.org/";
+const CLAIM_CONTRACT = "0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7";
 
 type FormValues = {
   amount: string;
   repeat: number;
 };
 
-const LensProtocol: React.FC = () => {
+const HumanityProtocol: React.FC = () => {
   const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
-      amount: "0.0001",
+      amount: "0.001",
       repeat: 50,
     },
   });
@@ -23,13 +22,10 @@ const LensProtocol: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const [mintedCount] = useState(0);
-  const [mintCount, setMintCount] = useState(10);
-  const mintInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const provider = new ethers.JsonRpcProvider(LENS_RPC_URL);
-  const privateKey = import.meta.env.VITE_PRIVATE_KEY_PTAN101;
-  const lensWallet = new ethers.Wallet(privateKey, provider);
+  const provider = new ethers.JsonRpcProvider(HUMANITY_RPC_URL);
+  const privateKey = import.meta.env.VITE_PRIVATE_KEY_PTANQN;
+  const wallet = new ethers.Wallet(privateKey, provider);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,23 +36,18 @@ const LensProtocol: React.FC = () => {
   };
 
   const generateData = () => {
-    const addressHex = lensWallet.address
+    const addressHex = wallet.address
       .toLowerCase()
       .replace("0x", "")
       .padStart(64, "0");
     return `0x51cff8d9000000000000000000000000${addressHex}`;
   };
 
-  const generateMintData = () => {
-    const addressHex = lensWallet.address.toLowerCase().replace("0x", "");
-    return `0x84bb1e42000000000000000000000000${addressHex}0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000000005af3107a400000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`;
-  };
-
   const onSubmit = async (data: FormValues) => {
     addLog(`🚀 Starting ${data.repeat} transactions...`);
 
     const inputData = generateData();
-    addLog(`✅ Data generated for ${lensWallet.address}: ${inputData}`);
+    addLog(`✅ Data generated for ${wallet.address}: ${inputData}`);
 
     let count = 0;
     intervalRef.current = setInterval(async () => {
@@ -67,8 +58,8 @@ const LensProtocol: React.FC = () => {
       }
 
       try {
-        const tx = await lensWallet.sendTransaction({
-          to: BRIDGE_CONTRACT,
+        const tx = await wallet.sendTransaction({
+          to: CLAIM_CONTRACT,
           data: generateData(),
           value: ethers.parseEther(data.amount),
         });
@@ -93,42 +84,22 @@ const LensProtocol: React.FC = () => {
     }
   };
 
-  const startMinting = () => {
-    addLog(`🚀 Starting ${mintCount} transactions...`);
+  const claimReward = async () => {
+    addLog(`🚀 Starting claim reward...`);
+    try {
+      const tx = await wallet.sendTransaction({
+        to: CLAIM_CONTRACT,
+        data: "0xb88a802f",
+        value: 0n,
+      });
 
-    const inputData = generateMintData();
-    addLog(`✅ Data generated for ${lensWallet.address}: ${inputData}`);
+      addLog(`⏳ Transaction pending confirmation...`);
 
-    let count = 0;
-    mintInterval.current = setInterval(async () => {
-      if (count >= mintCount) {
-        clearInterval(mintInterval.current!);
-        addLog("✅ All transactions completed!");
-        return;
-      }
-
-      try {
-        const tx = await lensWallet.sendTransaction({
-          to: MINT_CONTRACT,
-          data: inputData,
-          value: ethers.parseEther("0.0001"),
-        });
-
-        addLog(
-          `⏳ Transaction ${count + 1}/${mintCount} pending confirmation...`
-        );
-        await tx.wait();
-        addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
-      } catch (error) {
-        addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
-      }
-
-      count++;
-    }, 8000);
-  };
-
-  const stopMinting = () => {
-    addLog(`🛑 Minting Stopped. Minted: ${mintedCount}/${mintCount}`);
+      await tx.wait();
+      addLog(`✅ Transaction confirmed: ${tx.hash}`);
+    } catch (error) {
+      addLog(`❌ Error  ${error}`);
+    }
   };
 
   return (
@@ -153,7 +124,7 @@ const LensProtocol: React.FC = () => {
           }}
         >
           <Typography variant="h5" textAlign="center" mb={3}>
-            Auto Bridge GRASS
+            Auto Bridge tHP
           </Typography>
 
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -220,62 +191,18 @@ const LensProtocol: React.FC = () => {
             backgroundColor: "#fff",
           }}
         >
-          <Typography variant="h5" textAlign="center" mb={3}>
-            Auto Mint NFT
-          </Typography>
-          <TextField
-            label="Mint Count"
-            type="text"
-            value={mintCount}
-            onChange={(e) => setMintCount(Number(e.target.value))}
-            fullWidth
-            margin="normal"
-          />
           <Box display="flex" gap={2}>
             <Button
               variant="contained"
               color="primary"
               fullWidth
               sx={{ marginTop: 2 }}
-              onClick={startMinting}
+              onClick={claimReward}
             >
-              Start
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              fullWidth
-              sx={{ marginTop: 2 }}
-              onClick={stopMinting}
-            >
-              Stop
+              Claim Genesis Reward
             </Button>
           </Box>
         </Box>
-
-        {/* <Box
-        sx={{
-          maxWidth: 800,
-          margin: "50px auto",
-          padding: 8,
-          boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-          borderRadius: 2,
-          backgroundColor: "#fff",
-        }}
-      >
-      <Typography variant="h5" textAlign="center" mb={3}>
-        Auto Claim GRASS
-      </Typography>
-      
-      <Button
-        variant="contained"
-        color="primary"
-        fullWidth
-        sx={{ marginTop: 2 }}
-      >
-          Check pending claim 
-      </Button>
-      </Box> */}
       </div>
 
       {/* Logs */}
@@ -312,4 +239,4 @@ const LensProtocol: React.FC = () => {
   );
 };
 
-export default LensProtocol;
+export default HumanityProtocol;
