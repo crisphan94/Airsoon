@@ -3,7 +3,7 @@ import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { ethers } from "ethers";
 
-const HUMANITY_RPC_URL = "https://rpc.testnet.humanity.org/";
+const HUMANITY_RPC_URL = "http://localhost:3000/humanity";
 const CLAIM_CONTRACT = "0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7";
 
 type FormValues = {
