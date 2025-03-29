@@ -23,7 +23,6 @@ const LensProtocol: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const [mintedCount] = useState(0);
   const [mintCount, setMintCount] = useState(10);
   const mintInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -128,7 +127,10 @@ const LensProtocol: React.FC = () => {
   };
 
   const stopMinting = () => {
-    addLog(`🛑 Minting Stopped. Minted: ${mintedCount}/${mintCount}`);
+    if (mintInterval.current) {
+      clearInterval(mintInterval.current);
+      addLog("🛑 Stopped!");
+    }
   };
 
   return (

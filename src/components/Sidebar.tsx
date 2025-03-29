@@ -20,6 +20,11 @@ const menuItems = [
     icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
     path: "/humanity-protocol",
   },
+  {
+    text: "Monad",
+    icon: "https://img.cryptorank.io/coins/monad1710498467135.png",
+    path: "/monad",
+  },
 ];
 
 const Sidebar: React.FC = () => {
