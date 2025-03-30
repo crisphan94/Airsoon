@@ -10,7 +10,16 @@ const AdminLayout: React.FC = () => {
       <CssBaseline />
       <Header />
       <Sidebar />
-      <Box component="main" sx={{ flexGrow: 1, p: 2, backgroundColor: "#f3f4f6", minHeight: "100vh", width: '100%' }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 2,
+          backgroundColor: "#f3f4f6",
+          minHeight: "100vh",
+          width: "100%",
+        }}
+      >
         <Toolbar />
         <Outlet />
       </Box>

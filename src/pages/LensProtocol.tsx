@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { ethers } from "ethers";
+import useFilteredAccounts from "../hooks/useFilteredAccounts";
 
 const LENS_RPC_URL = "https://rpc.testnet.lens.dev";
 const BRIDGE_CONTRACT = "0x000000000000000000000000000000000000800A";
@@ -20,42 +21,29 @@ const LensProtocol: React.FC = () => {
     },
   });
 
+  const accounts = useFilteredAccounts();
+
   const [logs, setLogs] = useState<string[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
   const [mintCount, setMintCount] = useState(10);
   const mintInterval = useRef<NodeJS.Timeout | null>(null);
-
   const provider = new ethers.JsonRpcProvider(LENS_RPC_URL);
-  const privateKey = import.meta.env.VITE_PRIVATE_KEY_PTAN101;
-  const lensWallet = new ethers.Wallet(privateKey, provider);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
+  if (accounts.length === 0) {
+    return <>No wallets</>;
+  }
+
   const addLog = (message: string) => {
     setLogs((prevLogs) => [...prevLogs, message]);
   };
 
-  const generateData = () => {
-    const addressHex = lensWallet.address
-      .toLowerCase()
-      .replace("0x", "")
-      .padStart(64, "0");
-    return `0x51cff8d9000000000000000000000000${addressHex}`;
-  };
-
-  const generateMintData = () => {
-    const addressHex = lensWallet.address.toLowerCase().replace("0x", "");
-    return `0x84bb1e42000000000000000000000000${addressHex}0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000000005af3107a400000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`;
-  };
-
   const onSubmit = async (data: FormValues) => {
     addLog(`🚀 Starting ${data.repeat} transactions...`);
-
-    const inputData = generateData();
-    addLog(`✅ Data generated for ${lensWallet.address}: ${inputData}`);
 
     let count = 0;
     intervalRef.current = setInterval(async () => {
@@ -65,24 +53,37 @@ const LensProtocol: React.FC = () => {
         return;
       }
 
-      try {
-        const tx = await lensWallet.sendTransaction({
-          to: BRIDGE_CONTRACT,
-          data: generateData(),
-          value: ethers.parseEther(data.amount),
-        });
+      for (const acc of accounts) {
+        const wallet = new ethers.Wallet(acc.privateKey, provider);
 
-        addLog(
-          `⏳ Transaction ${count + 1}/${data.repeat} pending confirmation...`
-        );
-        await tx.wait();
-        addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
-      } catch (error) {
-        addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+        const generateData = () => {
+          const addressHex = wallet.address
+            .toLowerCase()
+            .replace("0x", "")
+            .padStart(64, "0");
+          return `0x51cff8d9000000000000000000000000${addressHex}`;
+        };
+        addLog(`✅ Data generated for ${wallet.address}: ${generateData()}`);
+
+        try {
+          const tx = await wallet.sendTransaction({
+            to: BRIDGE_CONTRACT,
+            data: generateData(),
+            value: ethers.parseEther(data.amount),
+          });
+
+          addLog(
+            `⏳ Transaction ${count + 1}/${data.repeat} pending confirmation...`
+          );
+          await tx.wait();
+          addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
+        } catch (error) {
+          addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+        }
       }
 
       count++;
-    }, 8000);
+    }, 10000);
   };
 
   const stopTransactions = () => {
@@ -95,9 +96,6 @@ const LensProtocol: React.FC = () => {
   const startMinting = () => {
     addLog(`🚀 Starting ${mintCount} transactions...`);
 
-    const inputData = generateMintData();
-    addLog(`✅ Data generated for ${lensWallet.address}: ${inputData}`);
-
     let count = 0;
     mintInterval.current = setInterval(async () => {
       if (count >= mintCount) {
@@ -106,20 +104,32 @@ const LensProtocol: React.FC = () => {
         return;
       }
 
-      try {
-        const tx = await lensWallet.sendTransaction({
-          to: MINT_CONTRACT,
-          data: inputData,
-          value: ethers.parseEther("0.0001"),
-        });
+      for (const acc of accounts) {
+        const wallet = new ethers.Wallet(acc.privateKey, provider);
 
+        const generateMintData = () => {
+          const addressHex = wallet.address.toLowerCase().replace("0x", "");
+          return `0x84bb1e42000000000000000000000000${addressHex}0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000000005af3107a400000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`;
+        };
         addLog(
-          `⏳ Transaction ${count + 1}/${mintCount} pending confirmation...`
+          `✅ Data generated for ${wallet.address}: ${generateMintData()}`
         );
-        await tx.wait();
-        addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
-      } catch (error) {
-        addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+
+        try {
+          const tx = await wallet.sendTransaction({
+            to: MINT_CONTRACT,
+            data: generateMintData(),
+            value: ethers.parseEther("0.0001"),
+          });
+
+          addLog(
+            `⏳ Transaction ${count + 1}/${mintCount} pending confirmation...`
+          );
+          await tx.wait();
+          addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
+        } catch (error) {
+          addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+        }
       }
 
       count++;
