@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  AppBar,
-  List,
-  ListItem,
-  ListItemText,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { AppBar, Toolbar, Typography } from "@mui/material";
 import useFilteredAccounts from "../hooks/useFilteredAccounts";
 
 const Header: React.FC = () => {
