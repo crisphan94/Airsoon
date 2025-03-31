@@ -16,6 +16,11 @@ const menuItems = [
     path: "/lens-protocol",
   },
   {
+    text: "OG Labs",
+    icon: "https://img.cryptorank.io/coins/0_g_labs1711467106027.png",
+    path: "/og",
+  },
+  {
     text: "Humanity Protocol",
     icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
     path: "/humanity-protocol",
