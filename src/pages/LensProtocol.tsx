@@ -65,11 +65,14 @@ const LensProtocol: React.FC = () => {
         };
         addLog(`✅ Data generated for ${wallet.address}: ${generateData()}`);
 
+        const nonce = await wallet.getNonce("pending");
+
         try {
           const tx = await wallet.sendTransaction({
             to: BRIDGE_CONTRACT,
             data: generateData(),
             value: ethers.parseEther(data.amount),
+            nonce,
           });
 
           addLog(
@@ -115,11 +118,14 @@ const LensProtocol: React.FC = () => {
           `✅ Data generated for ${wallet.address}: ${generateMintData()}`
         );
 
+        const nonce = await wallet.getNonce("pending");
+
         try {
           const tx = await wallet.sendTransaction({
             to: MINT_CONTRACT,
             data: generateMintData(),
             value: ethers.parseEther("0.0001"),
+            nonce,
           });
 
           addLog(
