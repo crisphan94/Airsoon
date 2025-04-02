@@ -75,6 +75,8 @@ const HumanityProtocol: React.FC = () => {
 
       for (const acc of accounts) {
         const wallet = new ethers.Wallet(acc.privateKey, provider);
+        const nonce = await wallet.getNonce("pending");
+
         try {
           const tx = await wallet.sendTransaction({
             to: BRIDGE_CONTRACT,
@@ -87,6 +89,7 @@ const HumanityProtocol: React.FC = () => {
               "0x"
             ),
             value: ethers.parseEther(data.amount),
+            nonce,
           });
 
           addLog(
