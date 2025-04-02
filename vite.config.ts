@@ -14,6 +14,12 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/humanity/, ""),
       },
+      "/avalanche": {
+        target: "https://avalanche-mainnet.infura.io/",
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/avalanche/, ""),
+      },
     },
   },
 });
