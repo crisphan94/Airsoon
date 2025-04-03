@@ -24,10 +24,8 @@ const LensProtocol: React.FC = () => {
   const accounts = useFilteredAccounts();
 
   const [logs, setLogs] = useState<string[]>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
   const [mintCount, setMintCount] = useState(10);
-  const mintInterval = useRef<NodeJS.Timeout | null>(null);
   const provider = new ethers.JsonRpcProvider(LENS_RPC_URL);
 
   useEffect(() => {
@@ -46,9 +44,8 @@ const LensProtocol: React.FC = () => {
     addLog(`🚀 Starting ${data.repeat} transactions...`);
 
     let count = 0;
-    intervalRef.current = setInterval(async () => {
+    const runSwap = async () => {
       if (count >= data.repeat) {
-        clearInterval(intervalRef.current!);
         addLog("✅ All transactions completed!");
         return;
       }
@@ -86,23 +83,17 @@ const LensProtocol: React.FC = () => {
       }
 
       count++;
-    }, 10000);
-  };
-
-  const stopTransactions = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      addLog("🛑 Stopped!");
-    }
+      runSwap();
+    };
+    runSwap();
   };
 
   const startMinting = () => {
     addLog(`🚀 Starting ${mintCount} transactions...`);
 
     let count = 0;
-    mintInterval.current = setInterval(async () => {
+    const runMint = async () => {
       if (count >= mintCount) {
-        clearInterval(mintInterval.current!);
         addLog("✅ All transactions completed!");
         return;
       }
@@ -139,15 +130,13 @@ const LensProtocol: React.FC = () => {
       }
 
       count++;
-    }, 8000);
+      runMint();
+    };
+
+    runMint();
   };
 
-  const stopMinting = () => {
-    if (mintInterval.current) {
-      clearInterval(mintInterval.current);
-      addLog("🛑 Stopped!");
-    }
-  };
+  const stopMinting = () => {};
 
   return (
     <Box
@@ -214,15 +203,6 @@ const LensProtocol: React.FC = () => {
                 sx={{ marginTop: 2 }}
               >
                 Start
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                fullWidth
-                sx={{ marginTop: 2 }}
-                onClick={stopTransactions}
-              >
-                Stop
               </Button>
             </Box>
           </form>
