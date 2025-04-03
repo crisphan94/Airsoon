@@ -9,7 +9,6 @@ const Monad: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const [mintCount, setMintCount] = useState(10);
-  const mintInterval = useRef<NodeJS.Timeout | null>(null);
   const accounts = useFilteredAccounts();
 
   const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -30,9 +29,8 @@ const Monad: React.FC = () => {
     addLog(`🚀 Starting ${mintCount} deploy...`);
 
     let count = 0;
-    mintInterval.current = setInterval(async () => {
+    const deploy = async () => {
       if (count >= mintCount) {
-        clearInterval(mintInterval.current!);
         addLog("✅ All transactions completed!");
         return;
       }
@@ -57,14 +55,10 @@ const Monad: React.FC = () => {
       }
 
       count++;
-    }, 5000);
-  };
+      deploy();
+    };
 
-  const stopMinting = () => {
-    if (mintInterval.current) {
-      clearInterval(mintInterval.current);
-      addLog("🛑 Stopped!");
-    }
+    deploy();
   };
 
   return (
@@ -108,15 +102,6 @@ const Monad: React.FC = () => {
               onClick={startDeploy}
             >
               Start
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              fullWidth
-              sx={{ marginTop: 2 }}
-              onClick={stopMinting}
-            >
-              Stop
             </Button>
           </Box>
         </Box>
