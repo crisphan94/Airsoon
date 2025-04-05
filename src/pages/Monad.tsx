@@ -129,7 +129,11 @@ const Monad: React.FC = () => {
           logs.map((log, index) => (
             <Typography
               key={index}
-              sx={{ fontSize: "14px", marginBottom: "4px" }}
+              sx={{
+                fontSize: "14px",
+                marginBottom: "4px",
+                wordBreak: "break-all",
+              }}
             >
               {log}
             </Typography>
