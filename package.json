@@ -13,6 +13,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.6",
+    "@mui/lab": "^7.0.0-beta.10",
     "@mui/material": "^6.4.6",
     "ethers": "^6.13.5",
     "lucide-react": "^0.477.0",
