@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 
 const menuItems = [
   {
-    text: "Lens Protocol",
+    text: "Lens Mainet",
     icon: "https://img.cryptorank.io/coins/lens_protocol1733845125692.png",
     path: "/lens-protocol",
   },
@@ -29,6 +29,11 @@ const menuItems = [
     text: "Humanity Protocol",
     icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
     path: "/humanity-protocol",
+  },
+  {
+    text: "Supper Chain",
+    icon: "",
+    path: "/supperchain",
   },
 ];
 
