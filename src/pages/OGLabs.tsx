@@ -80,6 +80,10 @@ const OGLabs: React.FC = () => {
     setValue(newValue);
   };
 
+  const [selectedMintToken, setSelectedMintToken] = useState(
+    "0x9A87C2412d500343c073E5Ae5394E3bE3874F76b"
+  );
+
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
@@ -136,11 +140,6 @@ const OGLabs: React.FC = () => {
 
       addLog(`Transaction ${count + 1} hash: ${tx.hash}`);
       addLog("⏳ Waiting for block confirmation...");
-
-      // const receipt = await tx.wait();
-      // addLog(
-      //   `✅ Swap ${count + 1} success ! Block number: ${receipt.blockNumber}`
-      // );
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -171,6 +170,28 @@ const OGLabs: React.FC = () => {
     };
 
     runSwap();
+  };
+
+  const MINT_ABI = ["function mint() public"];
+
+  const mintToken = async () => {
+    let count = 0;
+    for (const acc of accounts) {
+      addLog(`🚀 Starting mint token`);
+
+      const wallet = new ethers.Wallet(acc.privateKey, provider);
+
+      const mintContract = new ethers.Contract(
+        selectedMintToken,
+        MINT_ABI,
+        wallet
+      );
+
+      const tx = await mintContract.mint();
+      addLog(`Mint ${count + 1} hash: ${tx.hash}`);
+      addLog("⏳ Waiting for block confirmation...");
+      count++;
+    }
   };
 
   return (
@@ -302,6 +323,26 @@ const OGLabs: React.FC = () => {
                   </Box>
                 </form>
               </Box>
+            </TabPanel>
+            <TabPanel value="2">
+              <InputLabel id="mint-token">Token Mint</InputLabel>
+              <Select
+                labelId="mint-token"
+                label="Token"
+                sx={{ width: "80%" }}
+                onChange={(e) => setSelectedMintToken(e.target.value)}
+                value={selectedMintToken}
+              >
+                <MenuItem value="">
+                  <em>Select</em>
+                </MenuItem>
+                {tokenOptions.map((option) => (
+                  <MenuItem key={option.name} value={option.value}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              <Button onClick={mintToken}>Mint</Button>
             </TabPanel>
           </Box>
         </TabContext>
