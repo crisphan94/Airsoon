@@ -7,6 +7,7 @@ import HumanityProtocol from "./pages/HumanityProtocol";
 import Monad from "./pages/Monad";
 import OGLabs from "./pages/OGLabs";
 import Unichain from "./pages/Unichain";
+import Avalanche from "./pages/Avalanche";
 
 const App: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const App: React.FC = () => {
           <Route path="monad" element={<Monad />} />
           <Route path="humanity-protocol" element={<HumanityProtocol />} />
           <Route path="unichain" element={<Unichain />} />
+          <Route path="avalanche" element={<Avalanche />} />
         </Route>
       </Routes>
     </Router>

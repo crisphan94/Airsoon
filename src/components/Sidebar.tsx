@@ -35,6 +35,11 @@ const menuItems = [
     icon: "https://img.cryptorank.io/coins/unichain1728632895218.png",
     path: "/unichain",
   },
+  {
+    text: "Avalanche",
+    icon: "https://img.cryptorank.io/coins/avalanche1629705441155.png",
+    path: "/avalanche",
+  },
 ];
 
 const Sidebar: React.FC = () => {
