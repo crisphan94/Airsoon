@@ -6,6 +6,7 @@ import LensProtocol from "./pages/LensProtocol";
 import HumanityProtocol from "./pages/HumanityProtocol";
 import Monad from "./pages/Monad";
 import OGLabs from "./pages/OGLabs";
+import Unichain from "./pages/Unichain";
 
 const App: React.FC = () => {
   return (
@@ -17,6 +18,7 @@ const App: React.FC = () => {
           <Route path="og" element={<OGLabs />} />
           <Route path="monad" element={<Monad />} />
           <Route path="humanity-protocol" element={<HumanityProtocol />} />
+          <Route path="unichain" element={<Unichain />} />
         </Route>
       </Routes>
     </Router>

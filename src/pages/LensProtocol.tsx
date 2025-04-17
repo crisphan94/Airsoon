@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   TextField,
   Button,
@@ -11,7 +11,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
-import { ethers, Wallet } from "ethers";
+import { ethers } from "ethers";
 import useFilteredAccounts from "../hooks/useFilteredAccounts";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";

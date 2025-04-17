@@ -31,9 +31,9 @@ const menuItems = [
     path: "/humanity-protocol",
   },
   {
-    text: "Supper Chain",
-    icon: "",
-    path: "/supperchain",
+    text: "Unichain",
+    icon: "https://img.cryptorank.io/coins/unichain1728632895218.png",
+    path: "/unichain",
   },
 ];
 

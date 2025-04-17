@@ -18,22 +18,18 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-const RPC_URL = "https://rpc-qnd.inkonchain.com";
-const SWAP_ROUTER_ADDRESS = "0xaaaaaaae92Cc1cEeF79a038017889fDd26D23D4d";
+const RPC_MAINET = "https://mainnet.unichain.org";
+const RPC_TESTNET = "https://sepolia.unichain.org";
 
-const USDT_ADDRESS = "0x0200C29006150606B650577BBE7B6248F58470c1";
-const USDC_ADDRESS = "0xF1815bd50389c46847f0Bda824eC8da914045D14";
+const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
 
 const tokenOptions = [
-  { name: "USDT", value: USDT_ADDRESS },
-  { name: "USDC", value: USDC_ADDRESS },
+  { name: "ETH", value: "ETH_ADDRESS" },
+  { name: "WETH", value: WETH_ADDRESS },
 ];
 
-const SWAP_ABI = [
-  "transferAndMulticall(address[] tokens, uint256[] amounts, address[] targets, bytes[] datas, uint256[] values, address refundTo)",
-];
-
-const APPROVE_ABI = ["function approve(address spender, uint256 amount)"];
+const DEPOSIT_ABI = ["function deposit()"];
+const WITHDRAW_ABI = ["function withdraw(uint256 wad)"];
 
 const BALANCE_ABI = [
   "function balanceOf(address account) view returns (uint256)",
@@ -47,13 +43,13 @@ type FormValues = {
   tokenOut: string;
 };
 
-const SupperChain: React.FC = () => {
-  const { control, handleSubmit } = useForm<FormValues>({
+const Unichain: React.FC = () => {
+  const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
-      amount: "0.2",
+      amount: "0.0001",
       repeat: 20,
-      tokenIn: USDC_ADDRESS,
-      tokenOut: USDT_ADDRESS,
+      tokenIn: WETH_ADDRESS,
+      tokenOut: "ETH_ADDRESS",
     },
   });
 
@@ -61,28 +57,76 @@ const SupperChain: React.FC = () => {
 
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const providerMainet = new ethers.JsonRpcProvider(RPC_MAINET);
+  const providerTestnet = new ethers.JsonRpcProvider(RPC_TESTNET);
+
+  //balance
+  const [inputBalances, setInputBalances] = useState<
+    { name: string; balance: string }[]
+  >([]);
+  const [outputBalances, setOutputBalances] = useState<
+    { name: string; balance: string }[]
+  >([]);
+
+  const inputValue = watch("tokenIn");
+  const outputValue = watch("tokenOut");
 
   const [value, setValue] = React.useState("1");
   const handleChange = (event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
   };
 
+  const isNativeToken = (token: string) => token === "ETH_ADDRESS";
+
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  const updateBalance = async (
+    token: string,
+    acc: { name: string; privateKey: string },
+    type = "input"
+  ) => {
+    const balance = await getTokenBalance(token, acc.privateKey);
+    const acccount = { name: acc.name, balance };
+    type === "input"
+      ? setInputBalances((state) => [...state, acccount])
+      : setOutputBalances((state) => [...state, acccount]);
+  };
+
+  useEffect(() => {
+    if (accounts.length > 0) {
+      for (const acc of accounts) {
+        updateBalance(inputValue, acc);
+      }
+    }
+  }, [inputValue, accounts.length]);
+
+  useEffect(() => {
+    if (accounts.length > 0) {
+      for (const acc of accounts) {
+        updateBalance(outputValue, acc, "output");
+      }
+    }
+  }, [outputValue, accounts.length]);
 
   if (accounts.length === 0) {
     return <>No wallets</>;
   }
 
-  const updateTokenBalance = async (token: string) => {
-    const contract = new ethers.Contract(token, BALANCE_ABI, provider);
+  const getTokenBalance = async (token: string, privateKey: string) => {
+    const wallet = new ethers.Wallet(privateKey, providerMainet);
 
-    const balanceWei = await contract.balanceOf(
-      "0x489522a4a8ecc94E3421A8605fBB57CfDED6A52f"
-    );
+    if (isNativeToken(token)) {
+      const balance = await providerMainet.getBalance(wallet.address);
+
+      return ethers.formatEther(balance);
+    }
+
+    const contract = new ethers.Contract(token, BALANCE_ABI, providerMainet);
+    const balanceWei = await contract.balanceOf(wallet.address);
     const decimals = await contract.decimals();
+
     return ethers.formatUnits(balanceWei, decimals);
   };
 
@@ -90,94 +134,43 @@ const SupperChain: React.FC = () => {
     setLogs((prevLogs) => [...prevLogs, message]);
   };
 
-  function encodeApprove(spender: string, amount: bigint) {
-    const iface = new ethers.Interface([
-      "function approve(address spender, uint256 amount)",
-    ]);
-
-    if (spender === USDT_ADDRESS) {
-      return iface.encodeFunctionData("approve", [
-        "0x177778F19E89dD1012BdBe603F144088A95C4B53",
-        amount,
-      ]);
-    }
-    //USDC
-    return iface.encodeFunctionData("approve", [
-      "0xba7bAC71a8Ee550d89B827FE6d67bc3dCA07b104",
-      amount,
-    ]);
-  }
-
   const swapTokens = async ({
     tokenIn,
-    tokenOut,
     amountIn,
     privateKey,
     count,
   }: {
     tokenIn: string;
-    tokenOut: string;
     amountIn: bigint;
     privateKey: string;
     count: number;
   }) => {
-    const wallet = new ethers.Wallet(privateKey, provider);
+    const wallet = new ethers.Wallet(privateKey, providerMainet);
 
-    const approveContract = new ethers.Contract(tokenIn, APPROVE_ABI, wallet);
+    const abi = isNativeToken(tokenIn) ? DEPOSIT_ABI : WITHDRAW_ABI;
 
-    addLog(`${encodeApprove(tokenIn, amountIn)}`);
-    return;
+    const swapContract = new ethers.Contract(WETH_ADDRESS, abi, wallet);
+
+    const gasLimit = isNativeToken(tokenIn)
+      ? await swapContract.deposit.estimateGas({
+          value: amountIn,
+        })
+      : await swapContract.withdraw.estimateGas(amountIn);
 
     try {
-      const approve = await approveContract.approve(tokenIn, amountIn);
-      addLog(`⏳ Waiting ${count} pendding confirmating..: ${approve.hash}`);
+      const tx = isNativeToken(tokenIn)
+        ? await swapContract.deposit({
+            value: amountIn,
+            gasLimit,
+          })
+        : await swapContract.withdraw(amountIn, {
+            value: 0n,
+            gasLimit,
+          });
+      addLog(`⏳ Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
 
-      const res = await approve.wait();
-      addLog(`✅ Approve ${count} confirmed in block: ${res.blockNumber}`);
-
-      const swapContract = new ethers.Contract(
-        SWAP_ROUTER_ADDRESS,
-        SWAP_ABI,
-        wallet
-      );
-
-      const tx = await swapContract.transferAndMulticall(
-        [tokenIn],
-        [amountIn],
-        [
-          tokenIn,
-          "0xf70da97812CB96acDF810712Aa562db8dfA3dbEF",
-          "0xba7bAC71a8Ee550d89B827FE6d67bc3dCA07b104",
-          "0xeeeeee9eC4769A09a76A83C7bC42b185872860eE",
-        ],
-        [
-          "0x0200C29006150606B650577BBE7B6248F58470c1",
-          "0xf70da97812CB96acDF810712Aa562db8dfA3dbEF",
-          "0x177778F19E89dD1012BdBe603F144088A95C4B53",
-          "0xeeeeee9eC4769A09a76A83C7bC42b185872860eE",
-        ],
-        [
-          "0x095ea7b3000000000000000000000000ba7bac71a8ee550d89b827fe6d67bc3dca07b104000000000000000000000000000000000000000000000000000000000024ee9d",
-          "0x",
-          "0x73fc44570000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000026f021c00e0eeeeee9ec4769a09a76a83c7bc42b185872860eef1815bd50389c46847f0bda824ec8da914045d140200c29006150606b650577bbe7b6248f58470c1e000d4e800d9f800dde800dfa9c22a35955a2caf4b7a81f7f4b8d0f50567cc369e6ded2f3cb9d13a2a7b76b87da6fba68076c751808e3331cc38aee00fad8f4c32b1001fd8356b840c4d267e1b0000e067f635e2e8249478f800e824ee9d060300de128acb08000000000000000000000000fffd8963efd1fc6a506488495d951d5263988d2500000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000014f1815bd50389c46847f0bda824ec8da914045d140000000000000000000000000100e60603008a0300de0400ea0080317728bcce5d1c2895b71b01eebbb6989ae504ae00070a00000000000000000000000000000000000000000000000000000000000003018d050000020070000206070706000000000000000000000000000000000000000000000000000000e824f30f0301b70500600301d800020a0b00000000000000000000000000000000000000000000000000000000000301e50500800301d8eda49bce2f38d284f839be1f4f2e23e6c7cc7dbd02007002020f0500a000050607080700000000000000000000000000000000000000000000000000000003022c0500800301d80500600200700200480500c002000000e200e60000000040016a0179017907002001ae01b4000006002001b401b7000008002001dc01e500000700200206020f00000300000223022c0000080020024d025900000300000259026200000000000000000000000000000000000000",
-          "0x3dad0c9c0000000000000000000000000200c29006150606b650577bbe7b6248f58470c1000000000000000000000000489522a4a8ecc94e3421a8605fbb57cfded6a52f",
-        ],
-        [
-          "0x095ea7b3000000000000000000000000177778f19e89dd1012bdbe603f144088a95c4b53000000000000000000000000000000000000000000000000000000000024f4b4",
-          "0x",
-          "0x5ae401dc0000000000000000000000000000000000000000000000000000000067f6394400000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e404e45aaf0000000000000000000000000200c29006150606b650577bbe7b6248f58470c1000000000000000000000000f1815bd50389c46847f0bda824ec8da914045d140000000000000000000000000000000000000000000000000000000000000064000000000000000000000000eeeeee9ec4769a09a76a83c7bc42b185872860ee000000000000000000000000000000000000000000000000000000000024f4b40000000000000000000000000000000000000000000000000000000000249100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-          "0x3dad0c9c000000000000000000000000f1815bd50389c46847f0bda824ec8da914045d14000000000000000000000000489522a4a8ecc94e3421a8605fbb57cfded6a52f",
-        ],
-        [("0", "0", "0", "0")],
-        wallet.address,
-        {
-          gasLimit: "526029",
-          gasPrice: ethers.parseUnits("0.00001053", "gwei"),
-        }
-      );
-
-      // Chờ giao dịch được xác nhận
-      const receipt = await tx.wait();
+      const res = await tx.wait();
+      addLog(`✅ Approve ${count + 1} confirmed in block: ${res.blockNumber}`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -196,8 +189,7 @@ const SupperChain: React.FC = () => {
       for (const acc of accounts) {
         await swapTokens({
           tokenIn: data.tokenIn,
-          tokenOut: data.tokenOut,
-          amountIn: ethers.parseUnits(data.amount, 6),
+          amountIn: ethers.parseEther(data.amount),
           privateKey: acc.privateKey,
           count,
         });
@@ -224,7 +216,7 @@ const SupperChain: React.FC = () => {
         <TabContext value={value}>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList onChange={handleChange} aria-label="lab API tabs example">
-              <Tab label="soneium" value="1" />
+              <Tab label="Swap" value="1" />
               {/* <Tab label="Mint token" value="2" /> */}
               {/* <Tab label="Add liquidity" value="3" /> */}
             </TabList>
@@ -254,7 +246,10 @@ const SupperChain: React.FC = () => {
                           labelId="token-in-label"
                           label="Token In"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setInputBalances([]);
+                          }}
                           value={field.value}
                         >
                           <MenuItem value="">
@@ -269,11 +264,13 @@ const SupperChain: React.FC = () => {
                       )}
                     />
                   </FormControl>
-                  {/* <Typography>
-                    {updateTokenBalance(
-                      "0x489522a4a8ecc94E3421A8605fBB57CfDED6A52f"
-                    )}
-                  </Typography> */}
+                  {inputBalances.map((item, index) => (
+                    <div key={index} style={{ marginBottom: "20px" }}>
+                      <Typography sx={{ fontWeight: "bold" }}>
+                        {item.name}: {item.balance}
+                      </Typography>
+                    </div>
+                  ))}
 
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel id="token-out-label">Token Out</InputLabel>
@@ -285,7 +282,10 @@ const SupperChain: React.FC = () => {
                           labelId="token-out-label"
                           label="Token Out"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setOutputBalances([]);
+                          }}
                           value={field.value}
                         >
                           <MenuItem value="">
@@ -299,6 +299,13 @@ const SupperChain: React.FC = () => {
                         </Select>
                       )}
                     />
+                    {outputBalances.map((item, index) => (
+                      <div key={index} style={{ marginTop: "20px" }}>
+                        <Typography sx={{ fontWeight: "bold" }}>
+                          {item.name}: {item.balance}
+                        </Typography>
+                      </div>
+                    ))}
                   </FormControl>
 
                   <Controller
@@ -388,4 +395,4 @@ const SupperChain: React.FC = () => {
   );
 };
 
-export default SupperChain;
+export default Unichain;
