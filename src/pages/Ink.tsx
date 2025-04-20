@@ -18,16 +18,13 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-// const RPC_MAINET = "https://mainnet.unichain.org";
-const RPC_MAINET = "https://mainnet.optimism.io";
-// const RPC_MAINET = "https://mainnet.mode.network";
-const RPC_TESTNET = "https://sepolia.unichain.org";
+const RPC_MAINET = "https://rpc-gel.inkonchain.com";
 
-const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
+const WAVAX_ADDRESS = "0x4200000000000000000000000000000000000006";
 
 const tokenOptions = [
-  { name: "ETH", value: "ETH_ADDRESS" },
-  { name: "WETH", value: WETH_ADDRESS },
+  { name: "WETH", value: "AVAX_ADDRESS" },
+  { name: "ETH", value: WAVAX_ADDRESS },
 ];
 
 const DEPOSIT_ABI = ["function deposit()"];
@@ -45,13 +42,13 @@ type FormValues = {
   tokenOut: string;
 };
 
-const Unichain: React.FC = () => {
+const Ink: React.FC = () => {
   const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
       amount: "0.0001",
       repeat: 20,
-      tokenIn: WETH_ADDRESS,
-      tokenOut: "ETH_ADDRESS",
+      tokenIn: WAVAX_ADDRESS,
+      tokenOut: "AVAX_ADDRESS",
     },
   });
 
@@ -60,7 +57,6 @@ const Unichain: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const providerMainet = new ethers.JsonRpcProvider(RPC_MAINET);
-  const providerTestnet = new ethers.JsonRpcProvider(RPC_TESTNET);
 
   //balance
   const [inputBalances, setInputBalances] = useState<
@@ -78,7 +74,7 @@ const Unichain: React.FC = () => {
     setValue(newValue);
   };
 
-  const isNativeToken = (token: string) => token === "ETH_ADDRESS";
+  const isNativeToken = (token: string) => token === "AVAX_ADDRESS";
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -97,27 +93,19 @@ const Unichain: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchSequentially = async () => {
-      if (accounts.length === 0) return;
-
+    if (accounts.length > 0) {
       for (const acc of accounts) {
-        await updateBalance(inputValue, acc);
+        updateBalance(inputValue, acc);
       }
-    };
-
-    fetchSequentially();
+    }
   }, [inputValue, accounts.length]);
 
   useEffect(() => {
-    const fetchSequentially = async () => {
-      if (accounts.length === 0) return;
-
+    if (accounts.length > 0) {
       for (const acc of accounts) {
-        await updateBalance(outputValue, acc, "output");
+        updateBalance(outputValue, acc, "output");
       }
-    };
-
-    fetchSequentially();
+    }
   }, [outputValue, accounts.length]);
 
   if (accounts.length === 0) {
@@ -159,7 +147,7 @@ const Unichain: React.FC = () => {
 
     const abi = isNativeToken(tokenIn) ? DEPOSIT_ABI : WITHDRAW_ABI;
 
-    const swapContract = new ethers.Contract(WETH_ADDRESS, abi, wallet);
+    const swapContract = new ethers.Contract(WAVAX_ADDRESS, abi, wallet);
 
     const gasLimit = isNativeToken(tokenIn)
       ? await swapContract.deposit.estimateGas({
@@ -275,12 +263,14 @@ const Unichain: React.FC = () => {
                     />
                   </FormControl>
                   {inputBalances.map((item, index) => (
-                    <Typography key={index} sx={{ fontWeight: "bold" }}>
-                      {item.name}: {item.balance}
-                    </Typography>
+                    <div key={index} style={{ marginBottom: "20px" }}>
+                      <Typography sx={{ fontWeight: "bold" }}>
+                        {item.name}: {item.balance}
+                      </Typography>
+                    </div>
                   ))}
 
-                  <FormControl fullWidth sx={{ my: 2 }}>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel id="token-out-label">Token Out</InputLabel>
                     <Controller
                       name="tokenOut"
@@ -308,9 +298,11 @@ const Unichain: React.FC = () => {
                       )}
                     />
                     {outputBalances.map((item, index) => (
-                      <Typography key={index} sx={{ fontWeight: "bold" }}>
-                        {item.name}: {item.balance}
-                      </Typography>
+                      <div key={index} style={{ marginTop: "20px" }}>
+                        <Typography sx={{ fontWeight: "bold" }}>
+                          {item.name}: {item.balance}
+                        </Typography>
+                      </div>
                     ))}
                   </FormControl>
 
@@ -368,7 +360,7 @@ const Unichain: React.FC = () => {
         sx={{
           flex: 1,
           padding: 4,
-          height: "900px",
+          height: "700px",
           overflowY: "auto",
           width: "400px",
           boxShadow: "0 0 10px rgba(0,0,0,0.1)",
@@ -401,4 +393,4 @@ const Unichain: React.FC = () => {
   );
 };
 
-export default Unichain;
+export default Ink;

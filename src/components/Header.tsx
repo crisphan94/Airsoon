@@ -14,7 +14,11 @@ const Header: React.FC = () => {
         <Typography variant="h6" noWrap component="div">
           AirSoon
         </Typography>
-        <Typography variant="h6" noWrap component="div">
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px" }}
+          noWrap
+          component="div"
+        >
           {accounts.map((acc) => acc.name).join(", ")}
         </Typography>
       </Toolbar>

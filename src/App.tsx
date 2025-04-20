@@ -8,6 +8,7 @@ import Monad from "./pages/Monad";
 import OGLabs from "./pages/OGLabs";
 import Unichain from "./pages/Unichain";
 import Avalanche from "./pages/Avalanche";
+import Ink from "./pages/Ink";
 
 const App: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const App: React.FC = () => {
           <Route path="humanity-protocol" element={<HumanityProtocol />} />
           <Route path="unichain" element={<Unichain />} />
           <Route path="avalanche" element={<Avalanche />} />
+          <Route path="ink" element={<Ink />} />
         </Route>
       </Routes>
     </Router>
