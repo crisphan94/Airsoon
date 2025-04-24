@@ -18,10 +18,12 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-// const RPC_MAINET = "https://mainnet.unichain.org";
-const RPC_MAINET = "https://mainnet.optimism.io";
+const RPC_MAINET = "https://mainnet.unichain.org";
+// const RPC_MAINET = "https://mainnet.optimism.io";
 // const RPC_MAINET = "https://mainnet.mode.network";
-const RPC_TESTNET = "https://sepolia.unichain.org";
+// const RPC_MAINET = "https://base-rpc.publicnode.com";
+// const RPC_MAINET = "https://rpc.soneium.org";
+// const RPC_MAINET = "https://rpc-gel.inkonchain.com";
 
 const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
 
@@ -60,7 +62,7 @@ const Unichain: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const providerMainet = new ethers.JsonRpcProvider(RPC_MAINET);
-  const providerTestnet = new ethers.JsonRpcProvider(RPC_TESTNET);
+  // const providerTestnet = new ethers.JsonRpcProvider(RPC_TESTNET);
 
   //balance
   const [inputBalances, setInputBalances] = useState<
@@ -177,10 +179,10 @@ const Unichain: React.FC = () => {
             value: 0n,
             gasLimit,
           });
-      addLog(`⏳ Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
+      addLog(`✅Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
 
-      const res = await tx.wait();
-      addLog(`✅ Approve ${count + 1} confirmed in block: ${res.blockNumber}`);
+      // const res = await tx.wait();
+      // addLog(`✅ Approve ${count + 1} confirmed in block: ${res.blockNumber}`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }

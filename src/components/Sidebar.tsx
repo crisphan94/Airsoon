@@ -31,19 +31,9 @@ const menuItems = [
     path: "/humanity-protocol",
   },
   {
-    text: "Unichain",
-    icon: "https://img.cryptorank.io/coins/unichain1728632895218.png",
-    path: "/unichain",
-  },
-  {
     text: "Avalanche",
     icon: "https://img.cryptorank.io/coins/avalanche1629705441155.png",
     path: "/avalanche",
-  },
-  {
-    text: "Ink",
-    icon: "https://img.cryptorank.io/coins/ink1729850762329.png",
-    path: "/ink",
   },
 ];
 
