@@ -19,12 +19,12 @@ import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 const RPC_URL = "https://evmrpc-testnet.0g.ai";
-const SWAP_ROUTER_ADDRESS = "0xE233D75Ce6f04C04610947188DEC7C55790beF3b";
+const SWAP_ROUTER_ADDRESS = "0x16a811adc55A99b4456F62c54F12D3561559a268";
 
 const tokenOptions = [
-  { name: "USDT", value: "0x9A87C2412d500343c073E5Ae5394E3bE3874F76b" },
-  { name: "ETH", value: "0xce830D0905e0f7A9b300401729761579c5FB6bd6" },
-  { name: "BTC", value: "0x1E0D871472973c562650E991ED8006549F8CBEfc" },
+  { name: "USDT", value: "0xA8F030218d7c26869CADd46C5F10129E635cD565" },
+  { name: "ETH", value: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb" },
+  { name: "BTC", value: "0x6dc29491a8396Bd52376b4f6dA1f3E889C16cA85" },
 ];
 
 const SWAP_ROUTER_ABI = [
@@ -52,6 +52,39 @@ const SWAP_ROUTER_ABI = [
   },
 ];
 
+const POOL_ABI = [
+  {
+    inputs: [],
+    name: "slot0",
+    outputs: [
+      { internalType: "uint160", name: "sqrtPriceX96", type: "uint160" },
+      { internalType: "int24", name: "tick", type: "int24" },
+      { internalType: "uint16", name: "observationIndex", type: "uint16" },
+      {
+        internalType: "uint16",
+        name: "observationCardinality",
+        type: "uint16",
+      },
+      {
+        internalType: "uint16",
+        name: "observationCardinalityNext",
+        type: "uint16",
+      },
+      { internalType: "uint8", name: "feeProtocol", type: "uint8" },
+      { internalType: "bool", name: "unlocked", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "liquidity",
+    outputs: [{ internalType: "uint128", name: "", type: "uint128" }],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+
 type FormValues = {
   amount: string;
   repeat: number;
@@ -63,9 +96,9 @@ const OGLabs: React.FC = () => {
   const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
       amount: "100",
-      repeat: 20,
-      tokenIn: "0x9A87C2412d500343c073E5Ae5394E3bE3874F76b",
-      tokenOut: "0xce830D0905e0f7A9b300401729761579c5FB6bd6",
+      repeat: 10,
+      tokenIn: "0xA8F030218d7c26869CADd46C5F10129E635cD565",
+      tokenOut: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb",
     },
   });
 
@@ -81,12 +114,42 @@ const OGLabs: React.FC = () => {
   };
 
   const [selectedMintToken, setSelectedMintToken] = useState(
-    "0x9A87C2412d500343c073E5Ae5394E3bE3874F76b"
+    "0xA8F030218d7c26869CADd46C5F10129E635cD565"
+  );
+
+  const [balances, setBalances] = useState<{ name: string; balance: string }[]>(
+    []
   );
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  const updateBalance = async (name: string, privateKey: string) => {
+    const balance = await getTokenBalance(privateKey);
+    const acccount = { name: name, balance };
+    setBalances((state) => [...state, acccount]);
+  };
+
+  const getTokenBalance = async (privateKey: string) => {
+    const wallet = new ethers.Wallet(privateKey, provider);
+
+    const balance = await provider.getBalance(wallet.address);
+
+    return ethers.formatEther(balance);
+  };
+
+  useEffect(() => {
+    const fetchSequentially = async () => {
+      if (accounts.length === 0) return;
+
+      for (const acc of accounts) {
+        await updateBalance(acc.name, acc.privateKey);
+      }
+    };
+
+    fetchSequentially();
+  }, [accounts.length]);
 
   if (accounts.length === 0) {
     return <>No wallets</>;
@@ -175,23 +238,40 @@ const OGLabs: React.FC = () => {
   const MINT_ABI = ["function mint() public"];
 
   const mintToken = async () => {
+    const tokenName = tokenOptions.find(
+      (item) => item.value === selectedMintToken
+    )?.name;
+
+    addLog(`🚀 Starting mint ${tokenName}`);
+
     let count = 0;
-    for (const acc of accounts) {
-      addLog(`🚀 Starting mint token`);
+    const runMint = async () => {
+      if (count >= accounts.length) {
+        addLog(`✅ All mint ${tokenName} completed!`);
+        return;
+      }
 
-      const wallet = new ethers.Wallet(acc.privateKey, provider);
+      for (const acc of accounts) {
+        const wallet = new ethers.Wallet(acc.privateKey, provider);
 
-      const mintContract = new ethers.Contract(
-        selectedMintToken,
-        MINT_ABI,
-        wallet
-      );
+        const mintContract = new ethers.Contract(
+          selectedMintToken,
+          MINT_ABI,
+          wallet
+        );
 
-      const tx = await mintContract.mint();
-      addLog(`Mint ${count + 1} hash: ${tx.hash}`);
-      addLog("⏳ Waiting for block confirmation...");
+        const tx = await mintContract.mint();
+        addLog(
+          `✅ Mint ${tokenName} with ${acc.name} completed hash: ${tx.hash}`
+        );
+        count++;
+      }
+
       count++;
-    }
+      runMint();
+    };
+
+    runMint();
   };
 
   return (
@@ -205,6 +285,11 @@ const OGLabs: React.FC = () => {
       }}
     >
       <Box sx={{ width: "400px", typography: "body1" }}>
+        {balances.map((item, index) => (
+          <Typography key={index} sx={{ fontWeight: "bold" }}>
+            {item.name}: {item.balance}
+          </Typography>
+        ))}
         <TabContext value={value}>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList onChange={handleChange} aria-label="lab API tabs example">

@@ -7,6 +7,7 @@ import HumanityProtocol from "./pages/HumanityProtocol";
 import Monad from "./pages/Monad";
 import OGLabs from "./pages/OGLabs";
 import Avalanche from "./pages/Avalanche";
+import DeployContract from "./pages/DeployContract";
 
 const App: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const App: React.FC = () => {
           <Route path="monad" element={<Monad />} />
           <Route path="humanity-protocol" element={<HumanityProtocol />} />
           <Route path="avalanche" element={<Avalanche />} />
+          <Route path="deploy" element={<DeployContract />} />
         </Route>
       </Routes>
     </Router>

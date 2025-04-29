@@ -35,6 +35,11 @@ const menuItems = [
     icon: "https://img.cryptorank.io/coins/avalanche1629705441155.png",
     path: "/avalanche",
   },
+  {
+    text: "Deploy Contract",
+    icon: "./deploy.svg",
+    path: "/deploy",
+  },
 ];
 
 const Sidebar: React.FC = () => {

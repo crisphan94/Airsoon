@@ -1,0 +1,60 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Nền tròn -->
+  <circle cx="200" cy="200" r="190" fill="#f5f5f5" stroke="#e63946" stroke-width="10"/>
+  
+  <!-- Vòng tròn phía trong -->
+  <circle cx="200" cy="200" r="170" fill="white" stroke="#e63946" stroke-width="5"/>
+  
+  <!-- Biểu tượng hợp đồng lớn -->
+  <g transform="translate(130, 100) scale(1.4)">
+    <!-- Tài liệu hợp đồng -->
+    <path d="M30,10 h70 v120 h-70 z" fill="white" stroke="#e63946" stroke-width="4"/>
+    <path d="M30,10 h50 l20,20 h-50 z" fill="#e63946"/>
+    <path d="M80,10 v20 h20" fill="none" stroke="#e63946" stroke-width="4"/>
+    
+    <!-- Chữ "CONTRACT" -->
+    <text x="65" y="65" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#e63946">CONTRACT</text>
+    
+    <!-- Mã code -->
+    <rect x="40" y="75" width="50" height="5" fill="#e63946"/>
+    <rect x="40" y="85" width="50" height="5" fill="#e63946"/>
+    <rect x="40" y="95" width="30" height="5" fill="#e63946"/>
+    <rect x="40" y="105" width="40" height="5" fill="#e63946"/>
+  </g>
+  
+  <!-- Mũi tên Deploy -->
+  <g>
+    <!-- Đường mũi tên -->
+    <path d="M200,80 v100" stroke="#e63946" stroke-width="8" stroke-linecap="round"/>
+    <!-- Đầu mũi tên -->
+    <polygon points="200,200 185,175 215,175" fill="#e63946"/>
+    
+    <!-- Chữ "DEPLOY" -->
+    <text x="200" y="65" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="#e63946">DEPLOY</text>
+  </g>
+  
+  <!-- Biểu tượng blockchain/chains -->
+  <g transform="translate(120, 220)">
+    <!-- Chuỗi blocks -->
+    <rect x="0" y="0" width="30" height="30" rx="5" fill="#e63946"/>
+    <rect x="40" y="0" width="30" height="30" rx="5" fill="#e63946"/>
+    <rect x="80" y="0" width="30" height="30" rx="5" fill="#e63946"/>
+    <rect x="120" y="0" width="30" height="30" rx="5" fill="#e63946"/>
+    <rect x="160" y="0" width="30" height="30" rx="5" fill="#e63946"/>
+    
+    <!-- Đường kết nối -->
+    <line x1="30" y1="15" x2="40" y2="15" stroke="#e63946" stroke-width="3"/>
+    <line x1="70" y1="15" x2="80" y2="15" stroke="#e63946" stroke-width="3"/>
+    <line x1="110" y1="15" x2="120" y2="15" stroke="#e63946" stroke-width="3"/>
+    <line x1="150" y1="15" x2="160" y2="15" stroke="#e63946" stroke-width="3"/>
+    
+    <!-- Biểu tượng số nhiều -->
+    <rect x="20" y="40" width="30" height="30" rx="5" fill="#e63946" fill-opacity="0.7"/>
+    <rect x="60" y="40" width="30" height="30" rx="5" fill="#e63946" fill-opacity="0.7"/>
+    <rect x="100" y="40" width="30" height="30" rx="5" fill="#e63946" fill-opacity="0.7"/>
+    <rect x="140" y="40" width="30" height="30" rx="5" fill="#e63946" fill-opacity="0.7"/>
+    
+    <!-- Chữ "MULTI-CHAIN" -->
+    <text x="95" y="100" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#e63946">MULTI-CHAIN</text>
+  </g>
+</svg>
