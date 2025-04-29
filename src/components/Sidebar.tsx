@@ -21,19 +21,9 @@ const menuItems = [
     path: "/og",
   },
   {
-    text: "Monad",
-    icon: "https://img.cryptorank.io/coins/monad1710498467135.png",
-    path: "/monad",
-  },
-  {
     text: "Humanity Protocol",
     icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
     path: "/humanity-protocol",
-  },
-  {
-    text: "Avalanche",
-    icon: "https://img.cryptorank.io/coins/avalanche1629705441155.png",
-    path: "/avalanche",
   },
   {
     text: "Deploy Contract",

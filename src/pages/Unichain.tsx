@@ -180,9 +180,6 @@ const Unichain: React.FC = () => {
             gasLimit,
           });
       addLog(`✅Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
-
-      // const res = await tx.wait();
-      // addLog(`✅ Approve ${count + 1} confirmed in block: ${res.blockNumber}`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -229,8 +226,6 @@ const Unichain: React.FC = () => {
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList onChange={handleChange} aria-label="lab API tabs example">
               <Tab label="Swap" value="1" />
-              {/* <Tab label="Mint token" value="2" /> */}
-              {/* <Tab label="Add liquidity" value="3" /> */}
             </TabList>
             <TabPanel value="1">
               <Box
