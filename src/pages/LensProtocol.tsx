@@ -140,11 +140,13 @@ const LensProtocol: React.FC = () => {
   };
 
   const swapTokens = async ({
+    name,
     tokenIn,
     amountIn,
     privateKey,
     count,
   }: {
+    name: string;
     tokenIn: string;
     amountIn: bigint;
     privateKey: string;
@@ -173,7 +175,7 @@ const LensProtocol: React.FC = () => {
             gasLimit,
           });
 
-      addLog(`✅ Swap completed ${count + 1}: ${tx.hash}!`);
+      addLog(`✅ Swap completed ${name} - ${count + 1}: ${tx.hash}!`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -191,6 +193,7 @@ const LensProtocol: React.FC = () => {
 
       for (const acc of accounts) {
         await swapTokens({
+          name: acc.name,
           tokenIn: data.tokenIn,
           amountIn: ethers.parseEther(data.amount),
           privateKey: acc.privateKey,
