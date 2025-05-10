@@ -30,6 +30,10 @@ const menuItems = [
     icon: "./deploy.svg",
     path: "/deploy",
   },
+  {
+    text: "Ink",
+    path: "/ink",
+  },
 ];
 
 const Sidebar: React.FC = () => {

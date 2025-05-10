@@ -18,13 +18,18 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
+// const RPC_MAINET = "https://mainnet.unichain.org";
+// const RPC_MAINET = "https://mainnet.optimism.io";
+// const RPC_MAINET = "https://mainnet.mode.network";
+// const RPC_MAINET = "https://base-rpc.publicnode.com";
+// const RPC_MAINET = "https://rpc.soneium.org";
 const RPC_MAINET = "https://rpc-gel.inkonchain.com";
 
-const WAVAX_ADDRESS = "0x4200000000000000000000000000000000000006";
+const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
 
 const tokenOptions = [
-  { name: "WETH", value: "AVAX_ADDRESS" },
-  { name: "ETH", value: WAVAX_ADDRESS },
+  { name: "ETH", value: "ETH_ADDRESS" },
+  { name: "WETH", value: WETH_ADDRESS },
 ];
 
 const DEPOSIT_ABI = ["function deposit()"];
@@ -42,13 +47,13 @@ type FormValues = {
   tokenOut: string;
 };
 
-const Ink: React.FC = () => {
+const Unichain: React.FC = () => {
   const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
       amount: "0.0001",
       repeat: 20,
-      tokenIn: WAVAX_ADDRESS,
-      tokenOut: "AVAX_ADDRESS",
+      tokenIn: WETH_ADDRESS,
+      tokenOut: "ETH_ADDRESS",
     },
   });
 
@@ -57,6 +62,7 @@ const Ink: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const providerMainet = new ethers.JsonRpcProvider(RPC_MAINET);
+  // const providerTestnet = new ethers.JsonRpcProvider(RPC_TESTNET);
 
   //balance
   const [inputBalances, setInputBalances] = useState<
@@ -74,7 +80,7 @@ const Ink: React.FC = () => {
     setValue(newValue);
   };
 
-  const isNativeToken = (token: string) => token === "AVAX_ADDRESS";
+  const isNativeToken = (token: string) => token === "ETH_ADDRESS";
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,19 +99,27 @@ const Ink: React.FC = () => {
   };
 
   useEffect(() => {
-    if (accounts.length > 0) {
+    const fetchSequentially = async () => {
+      if (accounts.length === 0) return;
+
       for (const acc of accounts) {
-        updateBalance(inputValue, acc);
+        await updateBalance(inputValue, acc);
       }
-    }
+    };
+
+    fetchSequentially();
   }, [inputValue, accounts.length]);
 
   useEffect(() => {
-    if (accounts.length > 0) {
+    const fetchSequentially = async () => {
+      if (accounts.length === 0) return;
+
       for (const acc of accounts) {
-        updateBalance(outputValue, acc, "output");
+        await updateBalance(outputValue, acc, "output");
       }
-    }
+    };
+
+    fetchSequentially();
   }, [outputValue, accounts.length]);
 
   if (accounts.length === 0) {
@@ -147,7 +161,7 @@ const Ink: React.FC = () => {
 
     const abi = isNativeToken(tokenIn) ? DEPOSIT_ABI : WITHDRAW_ABI;
 
-    const swapContract = new ethers.Contract(WAVAX_ADDRESS, abi, wallet);
+    const swapContract = new ethers.Contract(WETH_ADDRESS, abi, wallet);
 
     const gasLimit = isNativeToken(tokenIn)
       ? await swapContract.deposit.estimateGas({
@@ -165,10 +179,7 @@ const Ink: React.FC = () => {
             value: 0n,
             gasLimit,
           });
-      addLog(`⏳ Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
-
-      const res = await tx.wait();
-      addLog(`✅ Approve ${count + 1} confirmed in block: ${res.blockNumber}`);
+      addLog(`✅Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -215,8 +226,6 @@ const Ink: React.FC = () => {
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList onChange={handleChange} aria-label="lab API tabs example">
               <Tab label="Swap" value="1" />
-              {/* <Tab label="Mint token" value="2" /> */}
-              {/* <Tab label="Add liquidity" value="3" /> */}
             </TabList>
             <TabPanel value="1">
               <Box
@@ -263,14 +272,12 @@ const Ink: React.FC = () => {
                     />
                   </FormControl>
                   {inputBalances.map((item, index) => (
-                    <div key={index} style={{ marginBottom: "20px" }}>
-                      <Typography sx={{ fontWeight: "bold" }}>
-                        {item.name}: {item.balance}
-                      </Typography>
-                    </div>
+                    <Typography key={index} sx={{ fontWeight: "bold" }}>
+                      {item.name}: {item.balance}
+                    </Typography>
                   ))}
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
+                  <FormControl fullWidth sx={{ my: 2 }}>
                     <InputLabel id="token-out-label">Token Out</InputLabel>
                     <Controller
                       name="tokenOut"
@@ -298,11 +305,9 @@ const Ink: React.FC = () => {
                       )}
                     />
                     {outputBalances.map((item, index) => (
-                      <div key={index} style={{ marginTop: "20px" }}>
-                        <Typography sx={{ fontWeight: "bold" }}>
-                          {item.name}: {item.balance}
-                        </Typography>
-                      </div>
+                      <Typography key={index} sx={{ fontWeight: "bold" }}>
+                        {item.name}: {item.balance}
+                      </Typography>
                     ))}
                   </FormControl>
 
@@ -360,7 +365,7 @@ const Ink: React.FC = () => {
         sx={{
           flex: 1,
           padding: 4,
-          height: "700px",
+          height: "600px",
           overflowY: "auto",
           width: "400px",
           boxShadow: "0 0 10px rgba(0,0,0,0.1)",
@@ -393,4 +398,4 @@ const Ink: React.FC = () => {
   );
 };
 
-export default Ink;
+export default Unichain;

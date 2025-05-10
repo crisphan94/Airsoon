@@ -75,7 +75,7 @@ const AutoDeploy = ({
   }[];
   provider: ethers.JsonRpcProvider;
 }) => {
-  const [mintCount, setMintCount] = useState(10);
+  const [mintCount, setMintCount] = useState(50);
   const [balances, setBalances] = useState<{ name: string; balance: string }[]>(
     []
   );
