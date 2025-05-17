@@ -96,7 +96,7 @@ const OGLabs: React.FC = () => {
   const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
       amount: "100",
-      repeat: 10,
+      repeat: 50,
       tokenIn: "0xA8F030218d7c26869CADd46C5F10129E635cD565",
       tokenOut: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb",
     },
@@ -165,12 +165,16 @@ const OGLabs: React.FC = () => {
     amountIn,
     privateKey,
     count,
+    name,
+    repeat,
   }: {
     tokenIn: string;
     tokenOut: string;
     amountIn: bigint;
     privateKey: string;
     count: number;
+    name: string;
+    repeat: number;
   }) => {
     const wallet = new ethers.Wallet(privateKey, provider);
 
@@ -200,9 +204,13 @@ const OGLabs: React.FC = () => {
         gasLimit: gasLimit,
         value: 0,
       });
-
-      addLog(`Transaction ${count + 1} hash: ${tx.hash}`);
-      addLog("⏳ Waiting for block confirmation...");
+      addLog(
+        `⏳ Transaction ${name} - ${count + 1}/${repeat} hash: ${
+          tx.hash
+        } pending confirmation...`
+      );
+      // await tx.wait();
+      // addLog(`✅ Transaction ${name} - ${count + 1}/${repeat} confirmed`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -225,6 +233,8 @@ const OGLabs: React.FC = () => {
           amountIn: ethers.parseEther(data.amount),
           privateKey: acc.privateKey,
           count,
+          name: acc.name,
+          repeat: data.repeat,
         });
       }
 

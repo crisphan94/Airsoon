@@ -8,6 +8,21 @@ const HUMANITY_RPC_URL = "http://localhost:3000/humanity";
 const CLAIM_CONTRACT = "0xa18f6FCB2Fd4884436d10610E69DB7BFa1bFe8C7";
 const BRIDGE_CONTRACT = "0x5F7CaE7D1eFC8cC05da97D988cFFC253ce3273eF";
 
+const WITHDRAW_ABI = [
+  {
+    name: "withdrawEth",
+    type: "function",
+    inputs: [
+      {
+        name: "destination",
+        type: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+];
+
 type FormValues = {
   amount: string;
   repeat: number;
@@ -16,7 +31,7 @@ type FormValues = {
 const HumanityProtocol: React.FC = () => {
   const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
-      amount: "0.001",
+      amount: "0.0001",
       repeat: 50,
     },
   });
@@ -24,12 +39,42 @@ const HumanityProtocol: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const accounts = useFilteredAccounts();
-
+  const [balances, setBalances] = useState<{ name: string; balance: string }[]>(
+    []
+  );
   const provider = new ethers.JsonRpcProvider(HUMANITY_RPC_URL);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  const updateBalance = async (name: string, privateKey: string) => {
+    const balance = await getTokenBalance(privateKey);
+    const acccount = { name: name, balance: Number(balance).toFixed(4) };
+    setBalances((state) => [...state, acccount]);
+  };
+
+  const getTokenBalance = async (privateKey: string) => {
+    const wallet = new ethers.Wallet(privateKey, provider);
+
+    const balance = await provider.getBalance(wallet.address);
+
+    return ethers.formatEther(balance);
+  };
+
+  useEffect(() => {
+    setBalances([]);
+
+    const fetchSequentially = async () => {
+      if (accounts.length === 0) return;
+
+      for (const acc of accounts) {
+        await updateBalance(acc.name, acc.privateKey);
+      }
+    };
+
+    fetchSequentially();
+  }, [accounts]);
 
   if (accounts.length === 0) {
     return <>No wallets</>;
@@ -75,17 +120,28 @@ const HumanityProtocol: React.FC = () => {
         const wallet = new ethers.Wallet(acc.privateKey, provider);
         const nonce = await wallet.getNonce("pending");
 
+        const arbSysContract = new ethers.Contract(
+          "0x0000000000000000000000000000000000000064",
+          WITHDRAW_ABI,
+          wallet
+        );
+
         try {
-          const tx = await wallet.sendTransaction({
-            to: BRIDGE_CONTRACT,
-            data: generateData(
-              0,
-              wallet.address,
-              ethers.parseEther(data.amount),
-              ethers.ZeroAddress,
-              true,
-              "0x"
-            ),
+          // const tx = await wallet.sendTransaction({
+          //   to: BRIDGE_CONTRACT,
+          //   data: generateData(
+          //     0,
+          //     wallet.address,
+          //     ethers.parseEther(data.amount),
+          //     ethers.ZeroAddress,
+          //     true,
+          //     "0x"
+          //   ),
+          //   value: ethers.parseEther(data.amount),
+          //   nonce,
+          // });
+
+          const tx = await arbSysContract.withdrawEth(wallet.address, {
             value: ethers.parseEther(data.amount),
             nonce,
           });
@@ -94,9 +150,13 @@ const HumanityProtocol: React.FC = () => {
             `⏳ Transaction ${count + 1}/${data.repeat} pending confirmation...`
           );
           await tx.wait();
-          addLog(`✅ Transaction ${count + 1} confirmed: ${tx.hash}`);
+          addLog(
+            `✅ Transaction ${count + 1}/${data.repeat} confirmed: ${tx.hash}`
+          );
         } catch (error) {
-          addLog(`❌ Error in Transaction ${count + 1}: ${error}`);
+          addLog(
+            `❌ Error in Transaction ${count + 1}/${data.repeat}: ${error}`
+          );
         }
       }
 
@@ -153,6 +213,11 @@ const HumanityProtocol: React.FC = () => {
           <Typography variant="h5" textAlign="center" mb={3}>
             Auto Bridge tHP
           </Typography>
+          {balances.map((item, index) => (
+            <Typography key={index} sx={{ fontWeight: "bold" }}>
+              {item.name}: {item.balance}
+            </Typography>
+          ))}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <Controller

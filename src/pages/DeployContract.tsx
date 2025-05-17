@@ -131,7 +131,7 @@ const AutoDeploy = ({
           const deployedContract = await factory.deploy();
           setLog("⏳ Waiting for deploying...");
           await deployedContract.waitForDeployment();
-          setLog(`✅ Deploy success ${acc.name} - ${count + 1}`);
+          setLog(`✅ Deploy success ${acc.name} - ${count + 1}/${mintCount}`);
         } catch (error) {
           setLog(`❌ Error in Deploy ${count + 1}: ${error}`);
         }

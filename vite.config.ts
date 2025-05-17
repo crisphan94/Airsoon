@@ -9,7 +9,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/humanity": {
-        target: "https://humanity-testnet.g.alchemy.com/public/",
+        target: "https://humanity-testnet.g.alchemy.com/public",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/humanity/, ""),
