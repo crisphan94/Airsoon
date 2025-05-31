@@ -26,6 +26,11 @@ const menuItems = [
     path: "/humanity-protocol",
   },
   {
+    text: "Pharos",
+    icon: "https://img.cryptorank.io/coins/pharos1731308644189.png",
+    path: "/pharos",
+  },
+  {
     text: "Deploy Contract",
     icon: "./deploy.svg",
     path: "/deploy",

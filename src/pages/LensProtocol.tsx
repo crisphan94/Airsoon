@@ -46,7 +46,7 @@ const LensProtocol: React.FC = () => {
   const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
       amount: "0.001",
-      repeat: 20,
+      repeat: 100,
       tokenIn: WGHO_ADDRESS,
       tokenOut: "GHO_ADDRESS",
     },

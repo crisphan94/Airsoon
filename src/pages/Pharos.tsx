@@ -10,79 +10,30 @@ import {
   Select,
   MenuItem,
   Tab,
+  Input,
 } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
-import { ethers } from "ethers";
+import { ethers, Wallet } from "ethers";
 import useFilteredAccounts from "../hooks/useFilteredAccounts";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-const RPC_URL = "https://evmrpc-testnet.0g.ai";
-const SWAP_ROUTER_ADDRESS = "0x16a811adc55A99b4456F62c54F12D3561559a268";
+const RPC_MAINET = "https://testnet.dplabs-internal.com";
+
+const WGHO_ADDRESS = "0x76aaada469d23216be5f7c596fa25f282ff9b364";
 
 const tokenOptions = [
-  { name: "USDT", value: "0xA8F030218d7c26869CADd46C5F10129E635cD565" },
-  { name: "ETH", value: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb" },
-  { name: "BTC", value: "0x6dc29491a8396Bd52376b4f6dA1f3E889C16cA85" },
+  { name: "PHRS", value: "GHO_ADDRESS" },
+  { name: "WPHRS", value: WGHO_ADDRESS },
 ];
 
-const SWAP_ROUTER_ABI = [
-  {
-    inputs: [
-      {
-        components: [
-          { name: "tokenIn", type: "address" },
-          { name: "tokenOut", type: "address" },
-          { name: "fee", type: "uint24" },
-          { name: "recipient", type: "address" },
-          { name: "deadline", type: "uint256" },
-          { name: "amountIn", type: "uint256" },
-          { name: "amountOutMinimum", type: "uint256" },
-          { name: "sqrtPriceLimitX96", type: "uint160" },
-        ],
-        name: "params",
-        type: "tuple",
-      },
-    ],
-    name: "exactInputSingle",
-    outputs: [{ name: "amountOut", type: "uint256" }],
-    stateMutability: "payable",
-    type: "function",
-  },
-];
+const DEPOSIT_ABI = ["function deposit()"];
+const WITHDRAW_ABI = ["function withdraw(uint256 wad)"];
 
-const POOL_ABI = [
-  {
-    inputs: [],
-    name: "slot0",
-    outputs: [
-      { internalType: "uint160", name: "sqrtPriceX96", type: "uint160" },
-      { internalType: "int24", name: "tick", type: "int24" },
-      { internalType: "uint16", name: "observationIndex", type: "uint16" },
-      {
-        internalType: "uint16",
-        name: "observationCardinality",
-        type: "uint16",
-      },
-      {
-        internalType: "uint16",
-        name: "observationCardinalityNext",
-        type: "uint16",
-      },
-      { internalType: "uint8", name: "feeProtocol", type: "uint8" },
-      { internalType: "bool", name: "unlocked", type: "bool" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "liquidity",
-    outputs: [{ internalType: "uint128", name: "", type: "uint128" }],
-    stateMutability: "view",
-    type: "function",
-  },
+const BALANCE_ABI = [
+  "function balanceOf(address account) view returns (uint256)",
+  "function decimals() view returns (uint8)",
 ];
 
 type FormValues = {
@@ -92,13 +43,13 @@ type FormValues = {
   tokenOut: string;
 };
 
-const OGLabs: React.FC = () => {
-  const { control, handleSubmit } = useForm<FormValues>({
+const Pharos: React.FC = () => {
+  const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
-      amount: "20",
-      repeat: 10,
-      tokenIn: "0xA8F030218d7c26869CADd46C5F10129E635cD565",
-      tokenOut: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb",
+      amount: "0.001",
+      repeat: 20,
+      tokenIn: WGHO_ADDRESS,
+      tokenOut: "GHO_ADDRESS",
     },
   });
 
@@ -106,37 +57,40 @@ const OGLabs: React.FC = () => {
 
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const providerMainet = new ethers.JsonRpcProvider(RPC_MAINET);
+
+  const [inputBalances, setInputBalances] = useState<
+    { name: string; balance: string }[]
+  >([]);
+  const [outputBalances, setOutputBalances] = useState<
+    { name: string; balance: string }[]
+  >([]);
+  const [sendAmouunt, setSendAmount] = useState(100);
+
+  const inputValue = watch("tokenIn");
+  const outputValue = watch("tokenOut");
 
   const [value, setValue] = React.useState("1");
   const handleChange = (event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
   };
 
-  const [selectedMintToken, setSelectedMintToken] = useState(
-    "0xA8F030218d7c26869CADd46C5F10129E635cD565"
-  );
-
-  const [balances, setBalances] = useState<{ name: string; balance: string }[]>(
-    []
-  );
+  const isNativeToken = (token: string) => token === "GHO_ADDRESS";
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
-  const updateBalance = async (name: string, privateKey: string) => {
-    const balance = await getTokenBalance(privateKey);
-    const acccount = { name: name, balance };
-    setBalances((state) => [...state, acccount]);
-  };
-
-  const getTokenBalance = async (privateKey: string) => {
-    const wallet = new ethers.Wallet(privateKey, provider);
-
-    const balance = await provider.getBalance(wallet.address);
-
-    return ethers.formatEther(balance);
+  const updateBalance = async (
+    token: string,
+    acc: { name: string; privateKey: string },
+    type = "input"
+  ) => {
+    const balance = await getTokenBalance(token, acc.privateKey);
+    const acccount = { name: acc.name, balance };
+    type === "input"
+      ? setInputBalances((state) => [...state, acccount])
+      : setOutputBalances((state) => [...state, acccount]);
   };
 
   useEffect(() => {
@@ -144,73 +98,86 @@ const OGLabs: React.FC = () => {
       if (accounts.length === 0) return;
 
       for (const acc of accounts) {
-        await updateBalance(acc.name, acc.privateKey);
+        await updateBalance(inputValue, acc);
       }
     };
 
     fetchSequentially();
-  }, [accounts.length]);
+  }, [inputValue, accounts.length]);
+
+  useEffect(() => {
+    const fetchSequentially = async () => {
+      if (accounts.length === 0) return;
+
+      for (const acc of accounts) {
+        await updateBalance(outputValue, acc, "output");
+      }
+    };
+
+    fetchSequentially();
+  }, [outputValue, accounts.length]);
 
   if (accounts.length === 0) {
     return <>No wallets</>;
   }
+
+  const getTokenBalance = async (token: string, privateKey: string) => {
+    const wallet = new ethers.Wallet(privateKey, providerMainet);
+
+    if (isNativeToken(token)) {
+      const balance = await providerMainet.getBalance(wallet.address);
+
+      return ethers.formatEther(balance);
+    }
+
+    const contract = new ethers.Contract(token, BALANCE_ABI, providerMainet);
+    const balanceWei = await contract.balanceOf(wallet.address);
+    const decimals = await contract.decimals();
+
+    return ethers.formatUnits(balanceWei, decimals);
+  };
 
   const addLog = (message: string) => {
     setLogs((prevLogs) => [...prevLogs, message]);
   };
 
   const swapTokens = async ({
+    name,
     tokenIn,
-    tokenOut,
     amountIn,
     privateKey,
     count,
-    name,
-    repeat,
   }: {
+    name: string;
     tokenIn: string;
-    tokenOut: string;
     amountIn: bigint;
     privateKey: string;
     count: number;
-    name: string;
-    repeat: number;
   }) => {
-    const wallet = new ethers.Wallet(privateKey, provider);
+    const wallet = new ethers.Wallet(privateKey, providerMainet);
 
-    const swapRouterContract = new ethers.Contract(
-      SWAP_ROUTER_ADDRESS,
-      SWAP_ROUTER_ABI,
-      wallet
-    );
+    const abi = isNativeToken(tokenIn) ? DEPOSIT_ABI : WITHDRAW_ABI;
+
+    const swapContract = new ethers.Contract(WGHO_ADDRESS, abi, wallet);
+
+    const gasLimit = isNativeToken(tokenIn)
+      ? await swapContract.deposit.estimateGas({
+          value: amountIn,
+        })
+      : await swapContract.withdraw.estimateGas(amountIn);
 
     try {
-      const params = {
-        tokenIn: tokenIn,
-        tokenOut: tokenOut,
-        fee: 3000,
-        recipient: wallet.address,
-        deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-        amountIn: amountIn,
-        amountOutMinimum: 0,
-        sqrtPriceLimitX96: 0,
-      };
+      const tx = isNativeToken(tokenIn)
+        ? await swapContract.deposit({
+            value: amountIn,
+            gasLimit,
+          })
+        : await swapContract.withdraw(amountIn, {
+            value: 0n,
+            gasLimit,
+          });
 
-      const gasLimit = await swapRouterContract.exactInputSingle.estimateGas(
-        params
-      );
-
-      const tx = await swapRouterContract.exactInputSingle(params, {
-        gasLimit: gasLimit,
-        value: 0,
-      });
-      addLog(
-        `⏳ Transaction ${name} - ${count + 1}/${repeat} hash: ${
-          tx.hash
-        } pending confirmation...`
-      );
-      await tx.wait();
-      addLog(`✅ Transaction ${name} - ${count + 1}/${repeat} confirmed`);
+      addLog(`✅ Swap completed ${name} - ${count + 1}: ${tx.hash}!`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -228,13 +195,11 @@ const OGLabs: React.FC = () => {
 
       for (const acc of accounts) {
         await swapTokens({
+          name: acc.name,
           tokenIn: data.tokenIn,
-          tokenOut: data.tokenOut,
           amountIn: ethers.parseEther(data.amount),
           privateKey: acc.privateKey,
           count,
-          name: acc.name,
-          repeat: data.repeat,
         });
       }
 
@@ -245,43 +210,35 @@ const OGLabs: React.FC = () => {
     runSwap();
   };
 
-  const MINT_ABI = ["function mint() public"];
-
-  const mintToken = async () => {
-    const tokenName = tokenOptions.find(
-      (item) => item.value === selectedMintToken
-    )?.name;
-
-    addLog(`🚀 Starting mint ${tokenName}`);
+  const send = async () => {
+    addLog(`🚀 Starting send `);
 
     let count = 0;
-    const runMint = async () => {
-      if (count >= accounts.length) {
-        addLog(`✅ All mint ${tokenName} completed!`);
+    const runSend = async () => {
+      if (count >= sendAmouunt) {
+        addLog("✅ Sent completed!");
         return;
       }
 
       for (const acc of accounts) {
-        const wallet = new ethers.Wallet(acc.privateKey, provider);
+        const wallet = new ethers.Wallet(acc.privateKey, providerMainet);
 
-        const mintContract = new ethers.Contract(
-          selectedMintToken,
-          MINT_ABI,
-          wallet
-        );
-
-        const tx = await mintContract.mint();
-        addLog(
-          `✅ Mint ${tokenName} with ${acc.name} completed hash: ${tx.hash}`
-        );
-        count++;
+        try {
+          const tx = await wallet.sendTransaction({
+            to: Wallet.createRandom(),
+            value: ethers.parseEther("0.00001"),
+          });
+          addLog(`✅ Send with ${acc.name} completed hash: ${tx.hash}`);
+        } catch (error) {
+          addLog(`❌ Error  ${error}`);
+        }
       }
 
       count++;
-      runMint();
+      runSend();
     };
 
-    runMint();
+    runSend();
   };
 
   return (
@@ -295,17 +252,11 @@ const OGLabs: React.FC = () => {
       }}
     >
       <Box sx={{ width: "400px", typography: "body1" }}>
-        {balances.map((item, index) => (
-          <Typography key={index} sx={{ fontWeight: "bold" }}>
-            {item.name}: {item.balance}
-          </Typography>
-        ))}
         <TabContext value={value}>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList onChange={handleChange} aria-label="lab API tabs example">
               <Tab label="Swap" value="1" />
-              <Tab label="Mint token" value="2" />
-              <Tab label="Add liquidity" value="3" />
+              <Tab label="Send" value="2" />
             </TabList>
             <TabPanel value="1">
               <Box
@@ -333,7 +284,10 @@ const OGLabs: React.FC = () => {
                           labelId="token-in-label"
                           label="Token In"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setInputBalances([]);
+                          }}
                           value={field.value}
                         >
                           <MenuItem value="">
@@ -348,8 +302,13 @@ const OGLabs: React.FC = () => {
                       )}
                     />
                   </FormControl>
+                  {inputBalances.map((item, index) => (
+                    <Typography key={index} sx={{ fontWeight: "bold" }}>
+                      {item.name}: {item.balance}
+                    </Typography>
+                  ))}
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
+                  <FormControl fullWidth sx={{ my: 2 }}>
                     <InputLabel id="token-out-label">Token Out</InputLabel>
                     <Controller
                       name="tokenOut"
@@ -359,7 +318,10 @@ const OGLabs: React.FC = () => {
                           labelId="token-out-label"
                           label="Token Out"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setOutputBalances([]);
+                          }}
                           value={field.value}
                         >
                           <MenuItem value="">
@@ -373,6 +335,11 @@ const OGLabs: React.FC = () => {
                         </Select>
                       )}
                     />
+                    {outputBalances.map((item, index) => (
+                      <Typography key={index} sx={{ fontWeight: "bold" }}>
+                        {item.name}: {item.balance}
+                      </Typography>
+                    ))}
                   </FormControl>
 
                   <Controller
@@ -420,36 +387,28 @@ const OGLabs: React.FC = () => {
               </Box>
             </TabPanel>
             <TabPanel value="2">
-              <InputLabel id="mint-token">Token Mint</InputLabel>
-              <Select
-                labelId="mint-token"
-                label="Token"
-                sx={{ width: "80%" }}
-                onChange={(e) => setSelectedMintToken(e.target.value)}
-                value={selectedMintToken}
-              >
-                <MenuItem value="">
-                  <em>Select</em>
-                </MenuItem>
-                {tokenOptions.map((option) => (
-                  <MenuItem key={option.name} value={option.value}>
-                    {option.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Button onClick={mintToken}>Mint</Button>
+              <TextField
+                onChange={(e) => setSendAmount(Number(e.target.value))}
+                label="Amount"
+                type="text"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+              />
+              <Button variant="contained" color="primary" onClick={send}>
+                Send
+              </Button>
             </TabPanel>
           </Box>
         </TabContext>
       </Box>
-      <div></div>
 
       {/* Logs */}
       <Paper
         sx={{
           flex: 1,
           padding: 4,
-          height: "700px",
+          height: "600px",
           overflowY: "auto",
           width: "400px",
           boxShadow: "0 0 10px rgba(0,0,0,0.1)",
@@ -482,4 +441,4 @@ const OGLabs: React.FC = () => {
   );
 };
 
-export default OGLabs;
+export default Pharos;
