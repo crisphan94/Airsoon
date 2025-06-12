@@ -22,9 +22,9 @@ const RPC_URL = "https://evmrpc-testnet.0g.ai";
 const SWAP_ROUTER_ADDRESS = "0x16a811adc55A99b4456F62c54F12D3561559a268";
 
 const tokenOptions = [
-  { name: "USDT", value: "0xA8F030218d7c26869CADd46C5F10129E635cD565" },
-  { name: "ETH", value: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb" },
-  { name: "BTC", value: "0x6dc29491a8396Bd52376b4f6dA1f3E889C16cA85" },
+  { name: "USDT", value: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf" },
+  { name: "ETH", value: "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c" },
+  { name: "BTC", value: "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d" },
 ];
 
 const SWAP_ROUTER_ABI = [
@@ -97,8 +97,8 @@ const OGLabs: React.FC = () => {
     defaultValues: {
       amount: "20",
       repeat: 10,
-      tokenIn: "0xA8F030218d7c26869CADd46C5F10129E635cD565",
-      tokenOut: "0x2619090fcfDB99a8CCF51c76C9467F7375040eeb",
+      tokenIn: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      tokenOut: "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
     },
   });
 
@@ -114,7 +114,7 @@ const OGLabs: React.FC = () => {
   };
 
   const [selectedMintToken, setSelectedMintToken] = useState(
-    "0xA8F030218d7c26869CADd46C5F10129E635cD565"
+    "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf"
   );
 
   const [balances, setBalances] = useState<{ name: string; balance: string }[]>(
