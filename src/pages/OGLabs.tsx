@@ -19,7 +19,7 @@ import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 const RPC_URL = "https://evmrpc-testnet.0g.ai";
-const SWAP_ROUTER_ADDRESS = "0x16a811adc55A99b4456F62c54F12D3561559a268";
+const SWAP_ROUTER_ADDRESS = "0xb95B5953FF8ee5D5d9818CdbEfE363ff2191318c";
 
 const tokenOptions = [
   { name: "USDT", value: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf" },
