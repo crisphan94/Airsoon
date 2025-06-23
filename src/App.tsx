@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AdminLayout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import LensProtocol from "./pages/LensProtocol";
-import HumanityProtocol from "./pages/HumanityProtocol";
+// import HumanityProtocol from "./pages/HumanityProtocol";
 import Monad from "./pages/Monad";
 import OGLabs from "./pages/OGLabs";
 import Avalanche from "./pages/Avalanche";
@@ -20,7 +20,7 @@ const App: React.FC = () => {
           <Route path="lens-protocol" element={<LensProtocol />} />
           <Route path="og" element={<OGLabs />} />
           <Route path="monad" element={<Monad />} />
-          <Route path="humanity-protocol" element={<HumanityProtocol />} />
+          {/* <Route path="humanity-protocol" element={<HumanityProtocol />} /> */}
           <Route path="avalanche" element={<Avalanche />} />
           <Route path="deploy" element={<DeployContract />} />
           <Route path="ink" element={<Ink />} />

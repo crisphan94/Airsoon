@@ -15,7 +15,7 @@ import useFilteredAccounts from "../hooks/useFilteredAccounts";
 
 const MONNAD_RPC = "https://testnet-rpc.monad.xyz";
 const OG_RPC = "https://evmrpc-testnet.0g.ai";
-const HUMANITY_RPC = "http://localhost:3000/humanity";
+// const HUMANITY_RPC = "http://localhost:3000/humanity";
 const MEGAETH_RPC = "https://carrot.megaeth.com/rpc";
 const SEISMIC_RPC = "https://node-2.seismicdev.net/rpc";
 const BASE_RPC = "https://sepolia.base.org";
@@ -227,12 +227,12 @@ const DeployContract: React.FC = () => {
       value: MONNAD_RPC,
       icon: "https://img.cryptorank.io/coins/monad1710498467135.png",
     },
-    {
-      key: "humanity",
-      name: "Humanity Protocol Testnet",
-      value: HUMANITY_RPC,
-      icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
-    },
+    // {
+    //   key: "humanity",
+    //   name: "Humanity Protocol Testnet",
+    //   value: HUMANITY_RPC,
+    //   icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
+    // },
     {
       key: "megaeth",
       name: "MEGAETH Testnet",
