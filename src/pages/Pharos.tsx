@@ -65,7 +65,8 @@ const Pharos: React.FC = () => {
   const [outputBalances, setOutputBalances] = useState<
     { name: string; balance: string }[]
   >([]);
-  const [sendAmouunt, setSendAmount] = useState(100);
+  const [sendAmouunt, setSendAmount] = useState("0.0001");
+  const [sendRepeat, setSendRepeat] = useState(100);
 
   const inputValue = watch("tokenIn");
   const outputValue = watch("tokenOut");
@@ -215,7 +216,7 @@ const Pharos: React.FC = () => {
 
     let count = 0;
     const runSend = async () => {
-      if (count >= sendAmouunt) {
+      if (count >= sendRepeat) {
         addLog("✅ Sent completed!");
         return;
       }
@@ -226,7 +227,7 @@ const Pharos: React.FC = () => {
         try {
           const tx = await wallet.sendTransaction({
             to: Wallet.createRandom(),
-            value: ethers.parseEther("0.00001"),
+            value: ethers.parseEther(sendAmouunt),
           });
           addLog(`✅ Send with ${acc.name} completed hash: ${tx.hash}`);
         } catch (error) {
@@ -388,10 +389,20 @@ const Pharos: React.FC = () => {
             </TabPanel>
             <TabPanel value="2">
               <TextField
-                onChange={(e) => setSendAmount(Number(e.target.value))}
+                onChange={(e) => setSendAmount(e.target.value)}
                 label="Amount"
                 type="text"
+                value={sendAmouunt}
                 variant="outlined"
+                fullWidth
+                margin="normal"
+              />
+              <TextField
+                onChange={(e) => setSendRepeat(Number(e.target.value))}
+                label="Repeat"
+                type="text"
+                variant="outlined"
+                value={sendRepeat}
                 fullWidth
                 margin="normal"
               />

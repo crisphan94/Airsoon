@@ -20,11 +20,16 @@ const menuItems = [
     icon: "https://img.cryptorank.io/coins/0_g_labs1711467106027.png",
     path: "/og",
   },
-  // {
-  //   text: "Humanity Protocol",
-  //   icon: "https://img.cryptorank.io/coins/humanity_protocol1709113797405.png",
-  //   path: "/humanity-protocol",
-  // },
+  {
+    text: "Ink",
+    icon: "https://img.cryptorank.io/coins/ink1729850762329.png",
+    path: "/ink",
+  },
+  {
+    text: "Unichain",
+    icon: "https://img.cryptorank.io/coins/unichain1728632895218.png",
+    path: "/unichain",
+  },
   {
     text: "Pharos",
     icon: "https://img.cryptorank.io/coins/pharos1731308644189.png",

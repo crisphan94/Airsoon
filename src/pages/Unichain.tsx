@@ -18,12 +18,7 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-const RPC_MAINET = "https://mainnet.unichain.org";
-// const RPC_MAINET = "https://mainnet.optimism.io";
-// const RPC_MAINET = "https://mainnet.mode.network";
-// const RPC_MAINET = "https://base-rpc.publicnode.com";
-// const RPC_MAINET = "https://rpc.soneium.org";
-// const RPC_MAINET = "https://rpc-gel.inkonchain.com";
+const RPC_MAINET = "https://unichain-rpc.publicnode.com";
 
 const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
 
@@ -151,11 +146,15 @@ const Unichain: React.FC = () => {
     amountIn,
     privateKey,
     count,
+    name,
+    repeat,
   }: {
     tokenIn: string;
     amountIn: bigint;
     privateKey: string;
     count: number;
+    name: string;
+    repeat: number;
   }) => {
     const wallet = new ethers.Wallet(privateKey, providerMainet);
 
@@ -180,6 +179,8 @@ const Unichain: React.FC = () => {
             gasLimit,
           });
       addLog(`✅Waiting ${count + 1} pendding confirmating..: ${tx.hash}`);
+      await tx.wait();
+      addLog(`✅ Transaction ${name} - ${count + 1}/${repeat} confirmed`);
     } catch (error) {
       addLog(`❌ Swap error ${count + 1}: ${error}`);
     }
@@ -201,6 +202,8 @@ const Unichain: React.FC = () => {
           amountIn: ethers.parseEther(data.amount),
           privateKey: acc.privateKey,
           count,
+          name: acc.name,
+          repeat: data.repeat,
         });
       }
 
@@ -365,7 +368,7 @@ const Unichain: React.FC = () => {
         sx={{
           flex: 1,
           padding: 4,
-          height: "900px",
+          height: "600px",
           overflowY: "auto",
           width: "400px",
           boxShadow: "0 0 10px rgba(0,0,0,0.1)",
